@@ -49,4 +49,17 @@ export const responseHelpers = (req, res, next) => {
       },
     });
   };
+
+  res.error = function (message, statusCode = 400, details = null) {
+    return this.status(statusCode).json({
+      success: false,
+      statusCode: statusCode,
+      error: {
+        message,
+        ...details(details && { details }),
+      },
+    });
+  };
+
+  next();
 };
