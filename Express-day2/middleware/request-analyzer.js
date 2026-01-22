@@ -38,74 +38,60 @@ export const requestAnalyzer = (options = {}) => {
 };
 
 export const requestValidator = (schema) => {
-  return (res, req, next) => {
+  return (req, res, next) => {
     const errors = [];
 
+    // Body validation
     if (schema.body) {
       for (const [field, rules] of Object.entries(schema.body)) {
         const value = req.body[field];
 
-        if (
-          rules.required &&
-          (value === undefined || value === null || value === "")
-        ) {
+        if (rules.required && !value) {
           errors.push({ field, message: `${field} is required.` });
           continue;
         }
 
-        if (value !== undefined && value !== null) {
+        if (value != null) {
           if (rules.type && typeof value !== rules.type) {
-            errors.push({
-              field,
-              message: `${field} must be of type ${rules.type}.`,
-            });
+            errors.push({ field, message: `${field} must be ${rules.type}.` });
           }
 
           if (rules.minLength && value.length < rules.minLength) {
-            errors.push({
-              field,
-              message: `${field} must be at least ${rules.minLength} characters long.`,
-            });
+            errors.push({ field, message: `${field} is too short.` });
           }
 
           if (rules.maxLength && value.length > rules.maxLength) {
-            errors.push({
-              field,
-              message: `${field} must be at most ${rules.maxLength} characters long.`,
-            });
+            errors.push({ field, message: `${field} is too long.` });
           }
         }
-        // Validate query params
-        if (schema.query) {
-          for (const [field, rules] of Object.entries(schema.query)) {
-            const value = req.query[field];
-
-            if (rules.required && !value) {
-              errors.push(`Query parameter ${field} is required`);
-            }
-          }
-        }
-
-        // Validate route params
-        if (schema.params) {
-          for (const [field, rules] of Object.entries(schema.params)) {
-            const value = req.params[field];
-
-            if (rules.required && !value) {
-              errors.push(`Path parameter ${field} is required`);
-            }
-          }
-        }
-
-        if (errors.length > 0) {
-          const error = new Error("Validation Failed");
-          error.statusCode = 400;
-          error.details = errors;
-          return next(error);
-        }
-
-        next();
       }
     }
+
+    // Query validation
+    if (schema.query) {
+      for (const [field, rules] of Object.entries(schema.query)) {
+        if (rules.required && !req.query[field]) {
+          errors.push({ field, message: `Query ${field} is required.` });
+        }
+      }
+    }
+
+    // Params validation
+    if (schema.params) {
+      for (const [field, rules] of Object.entries(schema.params)) {
+        if (rules.required && !req.params[field]) {
+          errors.push({ field, message: `Param ${field} is required.` });
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      const error = new Error("Validation Failed");
+      error.statusCode = 400;
+      error.details = errors;
+      return next(error);
+    }
+
+    next();
   };
 };

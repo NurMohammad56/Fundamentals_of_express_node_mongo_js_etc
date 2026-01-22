@@ -1,4 +1,4 @@
-import { AppError } from "./error-types.js";
+import { AppError } from "../errors/error-types.js";
 
 export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
