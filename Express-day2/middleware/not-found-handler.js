@@ -17,7 +17,7 @@ export const notFoundHandler = (req, res, next) => {
   };
 
   // Log the 404 for analytics
-  console.log(`\n🔍 404 NOT FOUND:`);
+  console.log(`\n 404 NOT FOUND:`);
   console.log(`Path: ${req.method} ${req.originalUrl}`);
   console.log(`IP: ${req.ip}`);
   console.log(`User Agent: ${req.get("User-Agent")}`);

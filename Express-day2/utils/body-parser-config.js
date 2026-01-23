@@ -1,10 +1,10 @@
 import express from "express";
 
-const bodyParserConfig = (app) => {
+export const bodyParserConfig = (app) => {
   app.use(
     express.json({
       limit: "10mb",
-      verify: (req, res, next) => {
+      verify: (req, res, buffer, encoding) => {
         req.rawBody = buffer.toString(encoding || "utf-8");
       },
     }),
@@ -28,18 +28,24 @@ const bodyParserConfig = (app) => {
   );
 };
 
-export const customBodyParser = (options = []) => {
+export const customBodyParser = (options = {}) => {
   return (req, res, next) => {
-    if (req.is("json")) {
-      express.json(options)(req, res, next);
-    } else if (req.is("urlencoded")) {
-      express.urlencoded({ extended: true, ...options })(req, res, next);
-    } else if (req.is("text/plain")) {
-      express.text(options)(req, res, next);
-    } else if (req.is("application/octet-stream") || req.is("image/*")) {
-      express.raw(options)(req, res, next);
-    } else {
-      next();
+    if (req.is("application/json")) {
+      return express.json(options)(req, res, next);
     }
+
+    if (req.is("application/x-www-form-urlencoded")) {
+      return express.urlencoded({ extended: true, ...options })(req, res, next);
+    }
+
+    if (req.is("text/plain")) {
+      return express.text(options)(req, res, next);
+    }
+
+    if (req.is(["application/octet-stream", "image/*"])) {
+      return express.raw(options)(req, res, next);
+    }
+
+    next();
   };
 };
